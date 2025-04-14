@@ -9,7 +9,7 @@ class Dryer extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'dryer_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = ['nama_alat', 'lokasi', 'kapasitas'];
 

@@ -9,7 +9,7 @@ class GrainType extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'grain_type_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = ['nama_jenis', 'deskripsi'];
 }

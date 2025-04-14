@@ -9,7 +9,7 @@ class DryingProcess extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'process_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = ['dryer_id', 'user_id', 'grain_type_id', 'timestamp_mulai', 'timestamp_selesai', 'berat_gabah', 'kadar_air_target', 'kadar_air_akhir', 'durasi_rekomendasi', 'durasi_aktual', 'status'];
 }

@@ -9,7 +9,7 @@ class SensorData extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'sensor_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = ['dryer_id', 'timestamp', 'kadar_air_gabah', 'suhu_gabah', 'suhu_ruangan'];
 }
