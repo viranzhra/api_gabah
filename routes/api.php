@@ -14,6 +14,7 @@ Route::put('/drying-processes/{id}', [DryingProcessController::class, 'update'])
 Route::delete('/drying-processes/{id}', [DryingProcessController::class, 'destroy']);
 Route::put('/drying-processes/start/{id}', [DryingProcessController::class, 'start']);
 Route::put('/drying-processes/finish/{id}', [DryingProcessController::class, 'finish']);
+Route::post('/drying-process/add-sensor/{processId}', [DryingProcessController::class, 'addSensorData'])->name('drying-process.add-sensor');
 
 
 

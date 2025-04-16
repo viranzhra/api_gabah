@@ -4,16 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DryingProcess;
+use App\Models\SensorData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class DryingProcessController extends Controller
 {
     public function index()
     {
-        return response()->json(DryingProcess::all());
-    }
-
+        $data = DryingProcess::with('grainType')->get();
+    
+        return response()->json($data);
+    }    
+ 
     public function show($id)
     {
         $process = DryingProcess::find($id);
@@ -116,6 +120,21 @@ class DryingProcessController extends Controller
         return response()->json(['message' => 'Data berhasil dihapus']);
     }
 
+    // public function start($id)
+    // {
+    //     $drying = DryingProcess::find($id);
+
+    //     if (!$drying) {
+    //         return response()->json(['message' => 'Data tidak ditemukan.'], 404);
+    //     }
+
+    //     $drying->status = 'proses'; // atau 'in_progress' sesuai konvensi
+    //     $drying->timestamp_mulai = Carbon::now('Asia/Jakarta');  // bisa diperbarui lagi kalau mau
+    //     $drying->save();
+
+    //     return response()->json(['message' => 'Proses pengeringan dimulai.']);
+    // }
+
     public function start($id)
     {
         $drying = DryingProcess::find($id);
@@ -124,11 +143,54 @@ class DryingProcessController extends Controller
             return response()->json(['message' => 'Data tidak ditemukan.'], 404);
         }
 
-        $drying->status = 'proses'; // atau 'in_progress' sesuai konvensi
-        $drying->timestamp_mulai = now(); // bisa diperbarui lagi kalau mau
+        $drying->status = 'proses';  // Set status pengeringan ke "proses"
+        $drying->timestamp_mulai = Carbon::now('Asia/Jakarta');  // Waktu mulai
         $drying->save();
 
+        // Proses untuk menambahkan data sensor setiap detik (dummy data untuk sekarang)
+        $this->generateSensorData($drying->id);  // Panggil metode untuk simulasikan data sensor
+
         return response()->json(['message' => 'Proses pengeringan dimulai.']);
+    }
+
+    // Fungsi untuk menambahkan data sensor setiap detik
+    public function addSensorData($processId)
+    {
+        // Cari proses pengeringan yang sesuai
+        $process = DryingProcess::where('status', 'ongoing')->first();
+
+        if (!$process || $process->status !== 'ongoing') {
+            return response()->json(['message' => 'Proses pengeringan tidak ditemukan atau belum dimulai.'], 404);
+        }
+
+        // Cek apakah durasi rekomendasi sudah tercapai
+        $startTime = Carbon::parse($process->timestamp_mulai);
+        $elapsedTime = $startTime->diffInMinutes(Carbon::now()); // Waktu berlalu dalam menit
+
+        if ($elapsedTime < $process->durasi_rekomendasi) {
+            // Generate data sensor random
+            $kadarAirGabah = rand(12, 20) / 100;  // Kadar air antara 12% sampai 20%
+            $suhuGabah = rand(30, 40);  // Suhu gabah antara 30°C sampai 40°C
+            $suhuRuangan = rand(25, 35);  // Suhu ruangan antara 25°C sampai 35°C
+
+            // Menambahkan data sensor dengan nilai random
+            SensorData::create([
+                'dryer_id' => $process->dryer_id,
+                'timestamp' => Carbon::now(),
+                'kadar_air_gabah' => $kadarAirGabah * 100,  // Kadar air dalam persen
+                'suhu_gabah' => $suhuGabah,
+                'suhu_ruangan' => $suhuRuangan
+            ]);
+
+            return response()->json(['message' => 'Data sensor ditambahkan.']);
+        }
+
+        // Jika durasi sudah tercapai, update status menjadi completed
+        $process->status = 'completed';
+        $process->timestamp_selesai = Carbon::now();
+        $process->save();
+
+        return response()->json(['message' => 'Proses pengeringan selesai.']);
     }
 
     public function finish($id)
@@ -139,17 +201,28 @@ class DryingProcessController extends Controller
             return response()->json(['message' => 'Data tidak ditemukan.'], 404);
         }
 
+        // Check if the drying process is in progress
         if ($drying->status !== 'proses' && $drying->status !== 'ongoing') {
             return response()->json(['message' => 'Proses tidak sedang berjalan.'], 400);
         }
 
-        $drying->status = 'selesai'; // atau 'completed'
-        $drying->timestamp_selesai = now();
-        $drying->durasi_aktual = now()->diffInMinutes($drying->timestamp_mulai);
-        $drying->kadar_air_akhir = 13.5; // Default / dummy value, bisa diganti
+        // Check if the drying process has reached the recommended duration
+        $currentDuration = now()->diffInMinutes($drying->timestamp_mulai);
+        if ($currentDuration >= $drying->durasi_rekomendasi) {
+            // If the drying duration has been reached, complete the process
+            $drying->status = 'completed';
+            $drying->timestamp_selesai = now();
+            $drying->durasi_aktual = $currentDuration;
+            $drying->kadar_air_akhir = 13.5; // Set the final moisture content, can be dynamic if needed
+            $drying->save();
 
-        $drying->save();
+            // Send notification to the operator
+            return response()->json([
+                'message' => 'Proses pengeringan selesai. Gabah sudah kering.',
+                'alert' => 'Gabah sudah kering, proses selesai.',
+            ]);
+        }
 
-        return response()->json(['message' => 'Proses pengeringan selesai.']);
+        return response()->json(['message' => 'Proses pengeringan belum mencapai durasi yang disarankan.'], 400);
     }
 }

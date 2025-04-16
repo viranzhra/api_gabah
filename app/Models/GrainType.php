@@ -12,4 +12,9 @@ class GrainType extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = ['nama_jenis', 'deskripsi'];
+
+    public function dryingProcesses()
+    {
+        return $this->hasMany(DryingProcess::class);
+    }
 }

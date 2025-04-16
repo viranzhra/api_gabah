@@ -12,4 +12,9 @@ class SensorData extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = ['dryer_id', 'timestamp', 'kadar_air_gabah', 'suhu_gabah', 'suhu_ruangan'];
+
+    public function dryer()
+    {
+        return $this->belongsTo(Dryer::class, 'dryer_id');
+    }
 }

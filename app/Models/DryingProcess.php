@@ -12,4 +12,9 @@ class DryingProcess extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = ['dryer_id', 'user_id', 'grain_type_id', 'timestamp_mulai', 'timestamp_selesai', 'berat_gabah', 'kadar_air_target', 'kadar_air_akhir', 'durasi_rekomendasi', 'durasi_aktual', 'status'];
+
+    public function grainType()
+    {
+        return $this->belongsTo(GrainType::class);
+    }
 }
